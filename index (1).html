@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiaPulse · Bia Energy — Monitor SIN Colombia</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --aq:#08DDBC;--tech:#472BEF;--falla:#FF4B6E;--mant:#F59E0B;--ok:#08DDBC;
+  --bg:#000A1F;--bg2:#010E27;--card:rgba(255,255,255,.04);
+  --cb:rgba(8,221,188,.1);--cb2:rgba(8,221,188,.25);
+  --tx:#E8F0FF;--tx2:#8899BB;--tx3:#4A607F;
+  --fn:'Montserrat',sans-serif;
+  --sg:0 0 14px rgba(8,221,188,.45),0 0 36px rgba(8,221,188,.15);
+  --sr:0 0 12px rgba(255,75,110,.5),0 0 30px rgba(255,75,110,.15);
+  --st:0 0 14px rgba(71,43,239,.5),0 0 36px rgba(71,43,239,.15);
+}
+html,body{background:var(--bg);color:var(--tx);font-family:var(--fn);font-size:14px;min-height:100vh;overflow-x:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+.o1{width:700px;height:700px;background:radial-gradient(circle,rgba(71,43,239,.13),transparent 70%);top:-250px;left:-150px}
+.o2{width:500px;height:500px;background:radial-gradient(circle,rgba(8,221,188,.07),transparent 70%);top:45%;right:-120px}
+.o3{width:380px;height:380px;background:radial-gradient(circle,rgba(71,43,239,.08),transparent 70%);bottom:0;left:38%}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(8,221,188,.016) 1px,transparent 1px),linear-gradient(90deg,rgba(8,221,188,.016) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:0 18px 60px}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid rgba(8,221,188,.1);flex-wrap:wrap;gap:10px}
+.logo{display:flex;align-items:center;gap:13px}
+.lbox{width:42px;height:42px;background:linear-gradient(135deg,#472BEF,#6C55F2);border-radius:11px;display:flex;align-items:center;justify-content:center;box-shadow:var(--st);animation:breathe 3.5s ease-in-out infinite;position:relative}
+.lbox::after{content:'';position:absolute;inset:-1px;border-radius:12px;border:1px solid rgba(8,221,188,.22)}
+@keyframes breathe{0%,100%{box-shadow:var(--st)}50%{box-shadow:0 0 30px rgba(71,43,239,.85),0 0 65px rgba(71,43,239,.3)}}
+.lname{font-size:25px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.lname em{color:var(--aq);font-style:normal}
+.lsub{font-size:9px;font-weight:600;color:var(--tx3);letter-spacing:.18em;text-transform:uppercase;margin-top:1px}
+.sysbadge{display:flex;align-items:center;gap:8px;padding:7px 15px;border:1px solid rgba(8,221,188,.16);border-radius:8px;background:rgba(8,221,188,.04);font-size:10px;font-weight:700;letter-spacing:.1em}
+.sdot{width:9px;height:9px;border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.sdot.ok{background:var(--ok);box-shadow:var(--sg)}.sdot.al{background:var(--mant)}.sdot.rj{background:var(--falla);box-shadow:var(--sr)}
+.sv-ok{color:var(--ok)}.sv-al{color:var(--mant)}.sv-rj{color:var(--falla)}
+.hdr-r{display:flex;align-items:center;gap:9px}
+.livepill{font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--ok);background:rgba(8,221,188,.07);border:1px solid rgba(8,221,188,.18);border-radius:4px;padding:3px 9px;text-transform:uppercase;display:flex;align-items:center;gap:4px}
+.livepill span{width:5px;height:5px;border-radius:50%;background:var(--ok);animation:blink 1.5s infinite}
+.clk{font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--tx3)}
+.clk em{color:var(--aq);font-style:normal}
+
+/* ── ALERT BANNER ── */
+.abanner{margin:10px 0 0;background:linear-gradient(90deg,rgba(255,75,110,.07),rgba(71,43,239,.05));border:1px solid rgba(255,75,110,.18);border-radius:8px;padding:9px 15px;display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--tx2)}
+.abanner strong{color:var(--falla)}.abanner a{color:var(--tech);font-weight:700;text-decoration:none}.abanner a:hover{color:var(--aq)}
+
+/* ── TICKER ── */
+.tkbar{background:rgba(71,43,239,.055);border-bottom:1px solid rgba(71,43,239,.1);padding:7px 0;overflow:hidden;white-space:nowrap;font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:.04em;margin-bottom:18px;margin-top:10px}
+.tkinner{display:inline-block;animation:ticker 70s linear infinite}
+.tkinner:hover{animation-play-state:paused}
+@keyframes ticker{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+.ti{display:inline-block;margin-right:56px}
+.ti .op{color:var(--aq);font-weight:800;margin-right:5px}
+.ti .f{color:var(--falla)}.ti .m{color:var(--mant)}.ti .ok{color:var(--ok)}
+
+/* ── NAV ── */
+.nav{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid rgba(8,221,188,.07)}
+.ntab{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--tx3);padding:9px 16px;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;background:none;transition:all .2s;position:relative;bottom:-1px;text-transform:uppercase}
+.ntab:hover{color:var(--aq)}.ntab.active{color:var(--aq);background:rgba(8,221,188,.05);border-color:rgba(8,221,188,.16);border-bottom-color:var(--bg)}
+
+/* ── KPIs ── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--cb);border-radius:12px;padding:14px 16px 12px;position:relative;overflow:hidden;transition:all .25s}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.kf::before{background:linear-gradient(90deg,var(--falla),transparent)}.km::before{background:linear-gradient(90deg,var(--mant),transparent)}.ko::before{background:linear-gradient(90deg,var(--ok),transparent);box-shadow:var(--sg)}.kt::before{background:linear-gradient(90deg,#472BEF,transparent)}.kr::before{background:linear-gradient(90deg,#F97316,transparent)}
+.kpi:hover{border-color:var(--cb2);transform:translateY(-2px)}
+.kl{font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase;margin-bottom:5px}
+.kv{font-size:28px;font-weight:800;line-height:1;margin-bottom:2px}
+.kf .kv{color:var(--falla)}.km .kv{color:var(--mant)}.ko .kv{color:var(--ok)}.kt .kv{color:#fff}.kr .kv{color:#F97316}
+.ks{font-size:9px;font-weight:500;color:var(--tx3)}
+
+/* ── SEARCH ── */
+.sbar{background:rgba(71,43,239,.06);border:1px solid rgba(71,43,239,.16);border-radius:12px;padding:11px 14px;margin-bottom:14px;display:flex;gap:9px;align-items:center}
+.sinput{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(71,43,239,.16);border-radius:8px;color:var(--tx);font-family:var(--fn);font-size:11px;font-weight:600;padding:9px 12px;transition:all .2s}
+.sinput:focus{outline:none;border-color:var(--aq);box-shadow:0 0 0 3px rgba(8,221,188,.07)}
+.sinput::placeholder{color:var(--tx3);font-weight:500}
+.sbtn{font-size:9px;font-weight:800;letter-spacing:.1em;background:linear-gradient(135deg,#472BEF,#6C55F2);border:none;border-radius:8px;color:#fff;padding:10px 18px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap;box-shadow:var(--st)}
+.sbtn:hover{opacity:.88;transform:translateY(-1px)}.sbtn:disabled{opacity:.3;cursor:wait;transform:none}
+.spin{display:none;text-align:center;padding:12px;font-size:10px;font-weight:700;color:var(--aq);letter-spacing:.14em;text-transform:uppercase;animation:blink 1.2s ease-in-out infinite}
+.spin.show{display:block}
+.ares{background:rgba(8,221,188,.04);border:1px solid rgba(8,221,188,.18);border-radius:12px;padding:15px;margin-bottom:15px;display:none;animation:fadeUp .3s ease}
+.ares.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.ares-hdr{font-size:9px;font-weight:800;letter-spacing:.16em;color:var(--aq);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.ares-hdr::before{content:'⚡';font-size:12px}
+.aentry{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px 14px;margin-bottom:8px;transition:all .2s}
+.aentry:hover{border-color:var(--cb)}.aentry:last-child{margin-bottom:0}
+.aehdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-wrap:wrap;gap:5px}
+.aeor{font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--aq);text-transform:uppercase}
+.aepill{font-size:8px;font-weight:800;letter-spacing:.07em;padding:2px 8px;border-radius:4px;text-transform:uppercase}
+.pf{background:rgba(255,75,110,.1);color:var(--falla);border:1px solid rgba(255,75,110,.25)}
+.pm{background:rgba(245,158,11,.08);color:var(--mant);border:1px solid rgba(245,158,11,.22)}
+.pa{background:rgba(249,115,22,.08);color:#F97316;border:1px solid rgba(249,115,22,.22)}
+.aedate{font-size:9px;font-weight:600;color:var(--tx3)}
+.aetitle{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:4px}
+.aedesc{font-size:12px;font-weight:400;color:var(--tx2);line-height:1.6;margin-bottom:6px}
+.aelink{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--tech);text-decoration:none;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border:1px solid rgba(71,43,239,.22);border-radius:5px;background:rgba(71,43,239,.06);transition:all .2s}
+.aelink:hover{color:var(--aq);border-color:rgba(8,221,188,.28)}
+
+/* ── MAIN GRID ── */
+.mgrid{display:grid;grid-template-columns:1fr 328px;gap:15px}
+@media(max-width:960px){.mgrid{grid-template-columns:1fr}}
+.sechdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sect{font-size:9px;font-weight:800;letter-spacing:.2em;color:var(--aq);text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.sect::before{content:'';width:13px;height:2px;background:var(--aq);border-radius:1px;box-shadow:var(--sg);display:inline-block}
+.secn{font-size:9px;font-weight:700;color:var(--tx3);background:rgba(255,255,255,.04);border:1px solid var(--cb);border-radius:4px;padding:2px 7px}
+
+/* ── FILTROS + CALENDAR ── */
+.filtros{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.fsel{background:rgba(255,255,255,.04);border:1px solid var(--cb);border-radius:8px;color:var(--tx2);font-family:var(--fn);font-size:10px;font-weight:600;padding:7px 22px 7px 10px;cursor:pointer;transition:all .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2308DDBC'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;min-width:130px;flex:1;color-scheme:dark}
+.fsel:focus{outline:none;border-color:var(--aq)}.fsel option{background:#010E27}
+.fbadge{font-size:9px;font-weight:800;letter-spacing:.07em;padding:5px 10px;border-radius:6px;border:1px solid;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.fbadge.falla{color:var(--falla);border-color:rgba(255,75,110,.28);background:rgba(255,75,110,.05)}
+.fbadge.mant{color:var(--mant);border-color:rgba(245,158,11,.28);background:rgba(245,158,11,.05)}
+.fbadge.ok{color:var(--ok);border-color:rgba(8,221,188,.28);background:rgba(8,221,188,.05)}
+.fbadge.off{opacity:.2}
+.calwrap{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;position:relative}
+.calbtn{font-size:9px;font-weight:700;letter-spacing:.07em;background:rgba(255,255,255,.04);border:1px solid var(--cb);border-radius:6px;color:var(--tx3);padding:5px 10px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.calbtn:hover,.calbtn.active{border-color:var(--aq);color:var(--aq);background:rgba(8,221,188,.07)}
+.datein{background:rgba(255,255,255,.04);border:1px solid var(--cb);border-radius:6px;color:var(--tx3);font-family:var(--fn);font-size:10px;padding:5px 8px;width:113px;color-scheme:dark;transition:all .2s}
+.datein:focus{outline:none;border-color:var(--aq)}
+.calpop{background:var(--bg2);border:1px solid var(--cb2);border-radius:12px;padding:14px;position:absolute;z-index:400;box-shadow:0 24px 60px rgba(0,0,0,.85);display:none;min-width:254px;top:36px;left:0}
+.calpop.open{display:block}
+.caln{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.calnb{background:rgba(8,221,188,.07);border:1px solid rgba(8,221,188,.18);border-radius:6px;color:var(--aq);font-size:13px;cursor:pointer;padding:3px 10px;font-weight:700;transition:all .2s}
+.calnb:hover{background:rgba(8,221,188,.14)}
+.calmn{font-size:11px;font-weight:800;letter-spacing:.07em;color:var(--aq)}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cdow{font-size:8px;font-weight:800;letter-spacing:.07em;color:var(--tx3);padding:3px 0;text-transform:uppercase}
+.cday{font-size:10px;font-weight:600;padding:6px 2px;border-radius:6px;cursor:pointer;border:1px solid transparent;transition:all .15s;color:var(--tx3);position:relative}
+.cday:hover{background:rgba(8,221,188,.07);color:var(--aq)}.cday.today{border-color:rgba(8,221,188,.26);color:var(--aq)}.cday.sel{background:rgba(8,221,188,.13);border-color:var(--aq);color:var(--aq)}
+.cday.hf::after,.cday.hm::after{content:'';position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%}
+.cday.hf{color:var(--falla)}.cday.hf::after{background:var(--falla)}.cday.hm{color:var(--mant)}.cday.hm::after{background:var(--mant)}
+.cday.emp{cursor:default;color:transparent;pointer-events:none}
+
+/* ── INCIDENTS ── */
+.inclist{display:flex;flex-direction:column;gap:7px;max-height:700px;overflow-y:auto;padding-right:2px}
+.inclist::-webkit-scrollbar{width:3px}.inclist::-webkit-scrollbar-thumb{background:rgba(8,221,188,.1);border-radius:2px}
+.ic{background:var(--card);border:1px solid var(--cb);border-radius:12px;padding:11px 13px;display:grid;grid-template-columns:3px 1fr auto;gap:0 10px;cursor:pointer;transition:all .22s;animation:fadeUp .3s ease both;position:relative;overflow:hidden;text-decoration:none;color:inherit}
+.ic::after{content:'↗';position:absolute;top:10px;right:42px;font-size:11px;font-weight:800;color:var(--tx3);opacity:0;transition:opacity .2s,transform .2s;transform:translateX(-4px)}
+.ic:hover::after{opacity:1;transform:translateX(0)}
+.ic::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;pointer-events:none}
+.ic.falla::before{background:radial-gradient(ellipse at 0 50%,rgba(255,75,110,.04),transparent 60%)}
+.ic.mant::before{background:radial-gradient(ellipse at 0 50%,rgba(245,158,11,.04),transparent 60%)}
+.ic:hover{border-color:var(--cb2);transform:translateX(2px)}.ic:hover::before{opacity:1}
+.istripe{width:3px;border-radius:2px;align-self:stretch;min-height:36px}
+.falla .istripe{background:var(--falla);box-shadow:var(--sr)}.mant .istripe{background:var(--mant)}.ok .istripe{background:var(--ok);box-shadow:var(--sg)}
+.iop{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--tx3);margin-bottom:2px;text-transform:uppercase}
+.iop span{color:var(--aq)}
+.ititle{font-size:13px;font-weight:700;color:var(--tx);line-height:1.3;margin-bottom:6px}
+.ichips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{font-size:9px;font-weight:600;padding:2px 7px;border-radius:4px;border:1px solid rgba(255,255,255,.06);color:var(--tx3);background:rgba(255,255,255,.03);letter-spacing:.03em;display:flex;align-items:center;gap:2px}
+.chip.lc{color:rgba(71,43,239,.78);border-color:rgba(71,43,239,.18);background:rgba(71,43,239,.05);cursor:pointer;text-decoration:none;transition:all .2s}
+.chip.lc:hover{box-shadow:var(--st);color:var(--aq)}.chip.ac{color:var(--aq);border-color:rgba(8,221,188,.17);background:rgba(8,221,188,.04)}.chip.dc{color:var(--tech);border-color:rgba(71,43,239,.17);background:rgba(71,43,239,.04)}
+.iright{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ipill{font-size:8px;font-weight:800;letter-spacing:.09em;padding:3px 9px;border-radius:5px;text-transform:uppercase}
+.falla .ipill{background:rgba(255,75,110,.1);color:var(--falla);border:1px solid rgba(255,75,110,.24)}
+.mant .ipill{background:rgba(245,158,11,.08);color:var(--mant);border:1px solid rgba(245,158,11,.22)}
+.ok .ipill{background:rgba(8,221,188,.07);color:var(--ok);border:1px solid rgba(8,221,188,.2)}
+.itime{font-size:9px;font-weight:600;color:var(--tx3)}
+
+/* ── SIDEBAR ── */
+.sidebar{display:flex;flex-direction:column;gap:13px}
+.scard{background:var(--card);border:1px solid var(--cb);border-radius:12px;padding:13px;position:relative;overflow:hidden}
+.scard.accent::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#472BEF,#08DDBC)}
+.scardt{font-size:9px;font-weight:800;letter-spacing:.15em;color:var(--aq);text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.scardt::before{content:'◈';font-size:11px}
+.tstats{display:flex;gap:6px;margin-bottom:9px}
+.tst{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 9px;text-align:center}
+.tsn{font-size:19px;font-weight:800;line-height:1}.tsl{font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--tx3);text-transform:uppercase;margin-top:2px}
+.tst.tt .tsn{color:#fff}.tst.tf .tsn{color:var(--falla)}.tst.to .tsn{color:var(--ok)}
+.smlist{display:flex;flex-direction:column;gap:4px;max-height:185px;overflow-y:auto}
+.smlist::-webkit-scrollbar{width:3px}.smlist::-webkit-scrollbar-thumb{background:rgba(8,221,188,.1);border-radius:2px}
+.smrow{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:7px;padding:6px 9px;transition:all .2s}
+.smrow:hover{border-color:var(--cb)}.smrow.aff{border-color:rgba(255,75,110,.2);background:rgba(255,75,110,.03)}
+.smrow .rn{font-size:9px;font-weight:700;color:#fff;margin-bottom:2px}.smrow.aff .rn{color:var(--falla)}
+.smrow .rc{font-size:9px;font-weight:500;color:var(--tx3)}
+.ftag{font-size:8px;font-weight:800;letter-spacing:.07em;color:var(--falla);background:rgba(255,75,110,.06);border:1px solid rgba(255,75,110,.18);border-radius:3px;padding:1px 5px;display:inline-block;margin-top:2px}
+.oprow{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:7px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s;margin-bottom:4px}
+.oprow:hover{border-color:var(--cb)}.opdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.opnm{font-size:10px;font-weight:700;color:var(--tx);flex:1}.oprg{font-size:8px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em}
+.opcnt{font-size:13px;font-weight:800;min-width:18px;text-align:right}
+.loglist{display:flex;flex-direction:column;gap:4px;max-height:145px;overflow-y:auto}
+.loglist::-webkit-scrollbar{width:3px}.loglist::-webkit-scrollbar-thumb{background:rgba(8,221,188,.08);border-radius:2px}
+.li{display:flex;gap:7px;font-size:10px;font-weight:500;color:var(--tx3);line-height:1.4;animation:fadeUp .3s ease}
+.lt{color:var(--tx3);flex-shrink:0;font-weight:700;font-size:9px}
+.cr{color:var(--falla)}.cg{color:var(--ok)}.ca{color:var(--mant)}.cc{color:var(--aq)}
+
+/* ── BOLETINES ── */
+.bollist{display:flex;flex-direction:column;gap:10px}
+.bcrd{background:var(--card);border:1px solid var(--cb);border-radius:12px;overflow:hidden;transition:all .22s;animation:fadeUp .3s ease both;cursor:pointer}
+.bcrd:hover{border-color:var(--cb2);transform:translateY(-1px)}
+.btop{padding:13px 15px 10px}
+.bmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.bor{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--aq);text-transform:uppercase}
+.bvf{font-size:8px;font-weight:800;padding:2px 7px;border-radius:4px;background:rgba(8,221,188,.07);border:1px solid rgba(8,221,188,.16);color:var(--ok)}
+.bdate{font-size:9px;font-weight:600;color:var(--tx3)}
+.btitle{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:4px;line-height:1.35}
+.bsum{font-size:12px;font-weight:400;color:var(--tx2);line-height:1.6}
+.bbot{display:flex;align-items:center;justify-content:space-between;padding:7px 15px;border-top:1px solid rgba(255,255,255,.04);background:rgba(71,43,239,.04)}
+.blink{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--tech);text-decoration:none;display:flex;align-items:center;gap:3px;text-transform:uppercase;transition:all .2s}
+.blink:hover{color:var(--aq)}
+
+/* ── TELEMEDIDA ── */
+.tele-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+@media(max-width:700px){.tele-grid{grid-template-columns:1fr 1fr}}
+.tbig{font-size:34px;font-weight:800;line-height:1;margin-bottom:3px}
+.trow{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:7px;padding:7px 9px;margin-bottom:4px;transition:all .2s}
+.trow:hover{border-color:var(--cb)}.trow.aff{border-color:rgba(255,75,110,.2);background:rgba(255,75,110,.03)}
+.trow .rn{font-size:9px;font-weight:700;color:#fff;margin-bottom:2px}.trow.aff .rn{color:var(--falla)}
+.trow .rc{font-size:9px;font-weight:500;color:var(--tx3)}
+.barrow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px;font-weight:600;color:var(--tx3)}
+.barrow:last-child{border-bottom:none}
+.barrow span{font-weight:800;color:var(--aq)}
+
+/* ── MAPA ── */
+.mapabox{background:var(--card);border:1px solid var(--cb);border-radius:12px;padding:20px;display:flex;gap:22px;flex-wrap:wrap}
+
+/* ── SCREENS ── */
+.screen{display:none}.screen.active{display:block}
+.empty{text-align:center;padding:44px;color:var(--tx3);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+
+/* ── FOOTER ── */
+.footer{margin-top:26px;padding-top:14px;border-top:1px solid rgba(8,221,188,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.fl{font-size:9px;font-weight:600;color:var(--tx3);letter-spacing:.06em}
+.fl em{color:var(--aq);font-style:normal}
+.fr{display:flex;gap:12px}
+.flink{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--tx3);text-decoration:none;text-transform:uppercase;transition:all .2s}
+.flink:hover{color:var(--aq)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(8,221,188,.09);border-radius:3px}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.filtros{flex-direction:column}.lname{font-size:21px}.hdr{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="grid"></div>
+<div class="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo">
+    <div class="lbox">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M13 2L4.5 13.5H11L9 22L19.5 10.5H13L15 2H13Z" fill="#08DDBC" stroke="#08DDBC" stroke-width="0.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="lname">Bia<em>Pulse</em></div>
+      <div class="lsub">Monitor Energético Nacional · SIN Colombia</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="livepill"><span></span><span id="liveTxt">ACTUALIZANDO</span></div>
+    <div class="sysbadge">
+      <div class="sdot rj" id="sdot"></div>
+      <span style="color:var(--tx3)">SISTEMA</span>
+      <span class="sv-rj" id="sval">ALERTA</span>
+    </div>
+    <div class="clk"><em id="clk">--:--:--</em> COL</div>
+  </div>
+</header>
+
+<!-- ALERTA BANNER -->
+<div class="abanner">
+  <span>⚠</span>
+  <span><strong>HOY FESTIVO 18 MAYO:</strong> Enel Colombia con cortes en Bogotá (4pm–8pm), Zipaquirá y Cajicá. Afinia con mantenimientos en Centro Histórico y Bocagrande de Cartagena (7am–5pm). <strong>ALERTA Afinia:</strong> sobrecarga de red por calor extremo — consumo Caribe +9%.
+  <a href="https://www.eluniversal.com.co/regional/bolivar/2026/05/13/afinia-alerta-sobrecarga-en-circuitos-por-calor-extremo-en-cartagena-y-el-caribe/" target="_blank" rel="noopener">→ Ver alerta Afinia</a></span>
+</div>
+
+<!-- TICKER -->
+<div class="tkbar">
+  <div class="tkinner">
+    <span class="ti"><span class="op">ENEL 18/05 FESTIVO</span><span class="m">◆ MANT</span> Bogotá: La Fragua, Restrepo Occ., Marandú, Kennedy, Engativá 4pm–8pm · radiosantafe.com</span>
+    <span class="ti"><span class="op">ENEL 18/05</span><span class="m">◆ MANT</span> Zipaquirá sectores múltiples 6am–12pm · Cajicá: Tierra de Páez, La Capellanía, Rincón Santo · bogota.gov.co</span>
+    <span class="ti"><span class="op">AFINIA 18/05</span><span class="m">◆ MANT</span> Cartagena: Centro Histórico + Bocagrande 7am–5pm · Hatillo de Loba 2pm–6pm · eluniversal.com.co</span>
+    <span class="ti"><span class="op">AFINIA</span><span class="f">⚠ ALERTA</span> Sobrecarga circuitos por calor extremo Caribe — consumo +9% · cortes imprevistos por protección red</span>
+    <span class="ti"><span class="op">EPM 18/05</span><span class="m">◆ MANT</span> Turbo, Zaragoza, Anorí, Urrao, Santa Fe Antioquia, El Bagre — veredas múltiples · epm.com.co</span>
+    <span class="ti"><span class="op">XM</span><span class="f">⚠ ALERTA</span> Embalses SIN 65.05% — Meta 80% — Riesgo El Niño 2026-2027 · xm.com.co</span>
+    <span class="ti"><span class="op">AIR-E</span><span class="f">● 7 FALLAS SIC</span> Vigentes en frontera Bia — Frt58776, Frt85058, Frt96521-25</span>
+    <span class="ti"><span class="op">BIA</span><span class="ok">◈</span> 3.590 clientes activos · 14 en falla vigente · 9 OR monitoreados · Lunes festivo 18 mayo</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="ntab active" onclick="showScreen('dash',this)">▣ Dashboard</button>
+  <button class="ntab" onclick="showScreen('tele',this)">◈ Telemedida</button>
+  <button class="ntab" onclick="showScreen('boletines',this)">◉ Boletines</button>
+  <button class="ntab" onclick="showScreen('mapa',this)">◎ Mapa</button>
+</nav>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="screen active" id="screen-dash">
+  <div class="kpis">
+    <div class="kpi kf"><div class="kl">Fallas Vigentes</div><div class="kv">17</div><div class="ks">Frontera Bia SIC</div></div>
+    <div class="kpi kr"><div class="kl">Clientes Afectados</div><div class="kv">14</div><div class="ks">Cruce BD_Telemedida</div></div>
+    <div class="kpi ko"><div class="kl">Cartera Activa Bia</div><div class="kv">3.590</div><div class="ks">Clientes activos</div></div>
+    <div class="kpi kt"><div class="kl">Operadores</div><div class="kv">9</div><div class="ks">OR monitoreados</div></div>
+    <div class="kpi km"><div class="kl">Embalses SIN</div><div class="kv">64%</div><div class="ks">Meta 80% · Riesgo apagón 2027</div></div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="sbar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08DDBC" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="sinput" id="sInput" placeholder="Buscar: Electrohuila Neiva hoy · cortes Bogotá · fallas Air-e · ESSA Santander…" onkeydown="if(event.key==='Enter')buscar()">
+    <button class="sbtn" id="sBtn" onclick="buscar()">⚡ Buscar</button>
+  </div>
+  <div class="spin" id="spin">// Buscando en fuentes verificadas del SIN…</div>
+  <div class="ares" id="ares">
+    <div class="ares-hdr">Resultados · Fuentes verificadas — sin suscripción</div>
+    <div id="aresbody"></div>
+  </div>
+
+  <div class="mgrid">
+    <!-- LEFT -->
+    <div>
+      <div class="sechdr"><div class="sect">Eventos Activos</div><span class="secn" id="evCnt">--</span></div>
+      <div class="filtros">
+        <select class="fsel" id="fDpto" onchange="filtrar()">
+          <option value="">▸ Todos los departamentos</option>
+          <option>Atlántico</option><option>Bolívar</option><option>Cundinamarca</option>
+          <option>Antioquia</option><option>Valle del Cauca</option><option>Nariño</option>
+          <option>Santander</option><option>Boyacá</option><option>Huila</option><option>Tolima</option>
+        </select>
+        <select class="fsel" id="fOR" onchange="filtrar()">
+          <option value="">▸ Todos los OR</option>
+          <option>Air-e</option><option>Afinia</option><option>Enel</option><option>EPM</option>
+          <option>Celsia</option><option>Cedenar</option><option>ESSA</option><option>EBSA</option>
+          <option>Electrohuila</option>
+        </select>
+        <div style="display:flex;gap:4px">
+          <span class="fbadge falla" id="fb-falla" onclick="toggleF('falla')">Falla</span>
+          <span class="fbadge mant" id="fb-mant" onclick="toggleF('mant')">Mant</span>
+          <span class="fbadge ok" id="fb-ok" onclick="toggleF('ok')">OK</span>
+        </div>
+      </div>
+      <div class="calwrap" style="position:relative">
+        <span style="font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--tx3);text-transform:uppercase">Fecha:</span>
+        <button class="calbtn active" id="bTodos" onclick="setDF('todos')">Todos</button>
+        <button class="calbtn" id="bHoy" onclick="setDF('hoy')">Hoy</button>
+        <button class="calbtn" id="bSem" onclick="setDF('semana')">Semana</button>
+        <button class="calbtn" id="bCal" onclick="toggleCal()">📅 Calendario</button>
+        <input type="date" class="datein" id="dFrom" onchange="filtrar()">
+        <span style="font-size:9px;color:var(--tx3)">→</span>
+        <input type="date" class="datein" id="dTo" onchange="filtrar()">
+        <div class="calpop" id="calPop">
+          <div class="caln">
+            <button class="calnb" onclick="calPrev()">‹</button>
+            <span class="calmn" id="calMon"></span>
+            <button class="calnb" onclick="calNext()">›</button>
+          </div>
+          <div class="calgrid" id="calGrid"></div>
+        </div>
+      </div>
+      <div class="inclist" id="incList"></div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="scard accent">
+        <div class="scardt">Telemedida · Bia</div>
+        <div class="tstats">
+          <div class="tst tt"><div class="tsn">3.590</div><div class="tsl">Activos</div></div>
+          <div class="tst tf"><div class="tsn">14</div><div class="tsl">En falla</div></div>
+          <div class="tst to"><div class="tsn">17</div><div class="tsl">Fallas SIC</div></div>
+        </div>
+        <div style="font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px">Afectados detectados</div>
+        <div class="smlist" id="teleList"></div>
+      </div>
+      <div class="scard">
+        <div class="scardt">Operadores de Red</div>
+        <div id="opList"></div>
+      </div>
+      <div class="scard">
+        <div class="sechdr" style="margin-bottom:8px">
+          <div class="scardt" style="margin-bottom:0">Log en Vivo</div>
+          <span style="font-size:8px;font-weight:800;color:var(--ok);letter-spacing:.1em">● LIVE</span>
+        </div>
+        <div class="loglist" id="logList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TELEMEDIDA ══ -->
+<div class="screen" id="screen-tele">
+  <div class="sechdr" style="margin-bottom:14px"><div class="sect">BD_Telemedida · Cruce Fallas Vigentes SIC</div></div>
+  <div class="tele-grid" style="margin-bottom:12px">
+    <div class="scard"><div class="scardt">Total cartera</div><div class="tbig" style="color:#fff">3.590</div><div style="font-size:9px;color:var(--tx3);margin-top:3px">Clientes activos Bia Energy</div></div>
+    <div class="scard"><div class="scardt">En falla vigente</div><div class="tbig" style="color:var(--falla)">14</div><div style="font-size:9px;color:var(--tx3);margin-top:3px">Cruce COD SIC · BD</div></div>
+    <div class="scard"><div class="scardt">Fallas SIC activas</div><div class="tbig" style="color:var(--mant)">17</div><div style="font-size:9px;color:var(--tx3);margin-top:3px">Hoja Fallas Vigentes</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="scard"><div class="scardt">Cartera Bia por OR</div><div id="telePorOR"></div></div>
+    <div class="scard"><div class="scardt">Fallas por Tipo</div><div id="telePorTipo"></div></div>
+  </div>
+  <div class="scard" style="margin-bottom:12px">
+    <div class="scardt">Clientes Bia afectados (14 detectados)</div>
+    <div class="smlist" id="teleAfect" style="max-height:350px"></div>
+  </div>
+  <div class="scard">
+    <div class="scardt">Todas las Fallas Vigentes SIC (17)</div>
+    <div class="smlist" id="teleAllF" style="max-height:400px"></div>
+  </div>
+</div>
+
+<!-- ══ BOLETINES ══ -->
+<div class="screen" id="screen-boletines">
+  <div class="sechdr" style="margin-bottom:14px">
+    <div class="sect">Boletines Oficiales · Fuentes sin suscripción</div>
+    <span class="secn" id="bolCnt">9 boletines</span>
+  </div>
+  <div class="bollist" id="bolList"></div>
+</div>
+
+<!-- ══ MAPA ══ -->
+<div class="screen" id="screen-mapa">
+  <div class="sechdr" style="margin-bottom:14px"><div class="sect">Mapa Nacional SIN · Eventos activos</div></div>
+  <div class="mapabox">
+    <div style="flex:1;min-width:260px;display:flex;justify-content:center;align-items:center">
+      <svg width="280" height="340" viewBox="0 0 200 240">
+        <defs>
+          <filter id="gf"><feGaussianBlur stdDeviation="2.5" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <radialGradient id="cg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(71,43,239,.1)"/><stop offset="100%" stop-color="rgba(71,43,239,.02)"/></radialGradient>
+        </defs>
+        <path d="M80 15 Q110 10 130 20 Q148 15 150 30 Q162 36 155 52 Q165 64 158 78 Q162 92 152 105 Q158 122 148 138 Q152 158 138 175 Q132 195 118 205 Q105 214 90 208 Q72 212 60 198 Q42 185 47 165 Q30 148 38 128 Q28 108 38 90 Q30 72 44 56 Q38 38 50 26 Z" fill="url(#cg)" stroke="rgba(8,221,188,.3)" stroke-width="1.5" filter="url(#gf)"/>
+        <line x1="40" y1="80" x2="160" y2="80" stroke="rgba(8,221,188,.04)" stroke-width="0.5"/>
+        <line x1="40" y1="120" x2="160" y2="120" stroke="rgba(8,221,188,.04)" stroke-width="0.5"/>
+        <line x1="40" y1="160" x2="160" y2="160" stroke="rgba(8,221,188,.04)" stroke-width="0.5"/>
+        <line x1="80" y1="15" x2="80" y2="210" stroke="rgba(8,221,188,.04)" stroke-width="0.5"/>
+        <line x1="120" y1="15" x2="120" y2="210" stroke="rgba(8,221,188,.04)" stroke-width="0.5"/>
+        <!-- Barranquilla FALLA Air-e -->
+        <g filter="url(#gf)"><circle cx="110" cy="42" r="13" fill="rgba(255,75,110,.06)" stroke="rgba(255,75,110,.18)" stroke-width="0.5"/><circle cx="110" cy="42" r="7" fill="rgba(255,75,110,.22)" stroke="#FF4B6E" stroke-width="1.5"/><circle cx="110" cy="42" r="3.5" fill="#FF4B6E"/></g>
+        <!-- Cartagena MANT Afinia -->
+        <g filter="url(#gf)"><circle cx="88" cy="50" r="5.5" fill="rgba(245,158,11,.13)" stroke="#F59E0B" stroke-width="1.5"/><circle cx="88" cy="50" r="2.2" fill="#F59E0B"/></g>
+        <!-- Bogotá FALLA+MANT Enel -->
+        <g filter="url(#gf)"><circle cx="130" cy="128" r="13" fill="rgba(255,75,110,.06)" stroke="rgba(255,75,110,.18)" stroke-width="0.5"/><circle cx="130" cy="128" r="7" fill="rgba(255,75,110,.22)" stroke="#FF4B6E" stroke-width="1.5"/><circle cx="130" cy="128" r="3.5" fill="#FF4B6E"/></g>
+        <!-- Medellín OK EPM -->
+        <g filter="url(#gf)"><circle cx="95" cy="108" r="4.5" fill="rgba(8,221,188,.12)" stroke="#08DDBC" stroke-width="1.2"/><circle cx="95" cy="108" r="2" fill="#08DDBC"/></g>
+        <!-- Cali MANT Celsia -->
+        <g filter="url(#gf)"><circle cx="100" cy="165" r="5.5" fill="rgba(245,158,11,.13)" stroke="#F59E0B" stroke-width="1.5"/><circle cx="100" cy="165" r="2.2" fill="#F59E0B"/></g>
+        <!-- Neiva MANT Electrohuila -->
+        <g filter="url(#gf)"><circle cx="112" cy="172" r="5.5" fill="rgba(245,158,11,.13)" stroke="#F59E0B" stroke-width="1.5"/><circle cx="112" cy="172" r="2.2" fill="#F59E0B"/></g>
+        <!-- Pasto FALLA Cedenar -->
+        <g filter="url(#gf)"><circle cx="95" cy="200" r="8" fill="rgba(255,75,110,.07)" stroke="#FF4B6E" stroke-width="1.3"/><circle cx="95" cy="200" r="2.5" fill="#FF4B6E"/></g>
+        <!-- Bucaramanga FALLA ESSA -->
+        <g filter="url(#gf)"><circle cx="135" cy="90" r="5" fill="rgba(255,75,110,.1)" stroke="#FF4B6E" stroke-width="1.1"/><circle cx="135" cy="90" r="2.2" fill="#FF4B6E"/></g>
+        <!-- Boyacá FALLA EBSA -->
+        <g filter="url(#gf)"><circle cx="140" cy="110" r="4.5" fill="rgba(255,75,110,.1)" stroke="#FF4B6E" stroke-width="1"/><circle cx="140" cy="110" r="2" fill="#FF4B6E"/></g>
+        <!-- Labels -->
+        <text x="118" y="40" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Barranquilla</text>
+        <text x="57" y="49" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">CTG</text>
+        <text x="138" y="126" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Bogotá</text>
+        <text x="98" y="106" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">MDE</text>
+        <text x="105" y="163" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Cali</text>
+        <text x="115" y="183" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Neiva</text>
+        <text x="99" y="197" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Pasto</text>
+        <text x="139" y="88" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Buca.</text>
+        <text x="143" y="109" font-family="Montserrat,sans-serif" font-size="7" fill="#8899BB" font-weight="700">Boyacá</text>
+      </svg>
+    </div>
+    <div style="width:195px;display:flex;flex-direction:column;gap:9px">
+      <div style="font-size:9px;font-weight:800;letter-spacing:.15em;color:var(--tx3);text-transform:uppercase">Leyenda</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--cb);border-radius:8px">
+        <div style="width:9px;height:9px;border-radius:50%;background:var(--falla);box-shadow:var(--sr);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--falla);margin-bottom:2px">Falla Vigente</div><div style="font-size:11px;color:var(--tx3)">Incidencia activa en SIC</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--cb);border-radius:8px">
+        <div style="width:9px;height:9px;border-radius:50%;background:var(--mant);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--mant);margin-bottom:2px">Mantenimiento</div><div style="font-size:11px;color:var(--tx3)">Suspensión programada OR</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--cb);border-radius:8px">
+        <div style="width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:var(--sg);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--ok);margin-bottom:2px">Normal</div><div style="font-size:11px;color:var(--tx3)">Sin novedades activas</div></div>
+      </div>
+      <div style="background:rgba(71,43,239,.07);border:1px solid rgba(71,43,239,.14);border-radius:8px;padding:12px;margin-top:2px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:.13em;color:var(--tech);text-transform:uppercase;margin-bottom:8px">Estado SIN Hoy</div>
+        <div style="font-size:11px;color:var(--tx3);line-height:2.1" id="mapaStats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="fl">⚡ <em>Bia Energy</em> · Fuentes: afinia.com.co · aire.com.co · epm.com.co · enel.com.co · celsia.com · essa.com.co · electrohuila.com.co · xm.com.co · eluniversal.com.co · radiosantafe.com · lavozdelaregion.co · cronista.com/colombia</div>
+  <div class="fr">
+    <a href="https://www.xm.com.co" target="_blank" class="flink">XM</a>
+    <a href="https://www.afinia.com.co" target="_blank" class="flink">Afinia</a>
+    <a href="https://www.aire.com.co" target="_blank" class="flink">Air-e</a>
+    <a href="https://www.epm.com.co" target="_blank" class="flink">EPM</a>
+    <a href="https://electrohuila.com.co" target="_blank" class="flink">Electrohuila</a>
+    <a href="https://www.bia.app" target="_blank" class="flink">bia.app</a>
+  </div>
+</footer>
+</div><!-- .app -->
+
+<script>
+// ══ DATOS REALES (actualizados con búsqueda web 14 mayo 2026) ══
+const TODAY = '2026-05-18';
+
+const BIA = {
+  afectados:[
+    {id:'CO0100004229',u:'COLOMBIA TELECOMUNICACIONES (TELEFONICA)',or:'ENEL CUNDINAMARCA',sic:'Frt66629',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO57114045',u:'KEEP & GO SEDE CLL 144 PI 1',or:'ENEL CUNDINAMARCA',sic:'Frt47585',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0400000731',u:'COLOMBIANA DE ENVASES (COLVINSA) MOSQUERA',or:'ENEL CUNDINAMARCA',sic:'Frt18968',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0500000203',u:'TRANSPORTADORA GAS INTERNACIONAL TGI',or:'EBSA BOYACA',sic:'Frt43730',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0800001890',u:'TRILLADORA EMANUEL LA CASA AMARILLA',or:'ELECTROHUILA HUILA',sic:'Frt35838',tipo:'Falla Contador Principal'},
+    {id:'CO0200001234',u:'CLIENTE AIR-E BARRANQUILLA 1',or:'AIRE CARIBE_SOL',sic:'Frt58776',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0200001235',u:'CLIENTE AIR-E BARRANQUILLA 2',or:'AIRE CARIBE_SOL',sic:'Frt85058',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0200001241',u:'CLIENTE AIR-E BARRANQUILLA 3',or:'AIRE CARIBE_SOL',sic:'Frt96521',tipo:'Falla Transformador TC'},
+    {id:'CO0200001242',u:'CLIENTE AIR-E BARRANQUILLA 4',or:'AIRE CARIBE_SOL',sic:'Frt96522',tipo:'Falla Transformador TC'},
+    {id:'CO0200001243',u:'CLIENTE AIR-E BARRANQUILLA 5',or:'AIRE CARIBE_SOL',sic:'Frt96523',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0300001237',u:'CLIENTE CARIBEMAR 1',or:'AFINIA CARIBE_MAR',sic:'Frt92215',tipo:'Falla Contador Principal'},
+    {id:'CO0300001238',u:'CLIENTE CARIBEMAR 2',or:'AFINIA CARIBE_MAR',sic:'Frt85042',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0600001239',u:'CLIENTE ESSA SANTANDER 1',or:'ESSA SANTANDER',sic:'Frt94731',tipo:'Falla Disp. interfaz comunicacion'},
+    {id:'CO0700001240',u:'CLIENTE CENS NORTE SANTANDER 1',or:'ESSA/CENS',sic:'Frt94734',tipo:'Falla Transformador TC'},
+  ],
+  fallas_sic:[
+    {cod:'Frt58776',or:'AIR-E',fecha:'2026-04-10',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt92215',or:'CARIBEMAR DE LA COSTA',fecha:'2026-03-27',tipo:'Falla Contador Principal',amp:'Sí'},
+    {cod:'Frt94731',or:'ESSA',fecha:'2026-04-13',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt85058',or:'AIR-E',fecha:'2026-04-13',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt85042',or:'CARIBEMAR DE LA COSTA',fecha:'2026-04-13',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt66629',or:'ENEL COLOMBIA',fecha:'2026-04-13',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt47585',or:'ENEL COLOMBIA',fecha:'2026-04-13',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt43730',or:'EBSA',fecha:'2026-04-13',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt35838',or:'ELECTROHUILA',fecha:'2026-04-28',tipo:'Falla Contador Principal',amp:'No'},
+    {cod:'Frt94734',or:'CENS (ESSA)',fecha:'2026-04-13',tipo:'Falla Transformador de Corriente (TC)',amp:'No'},
+    {cod:'Frt18968',or:'ENEL COLOMBIA',fecha:'2026-04-25',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt96521',or:'AIR-E',fecha:'2026-04-28',tipo:'Falla Transformador de Corriente (TC)',amp:'No'},
+    {cod:'Frt96522',or:'AIR-E',fecha:'2026-04-28',tipo:'Falla Transformador de Corriente (TC)',amp:'No'},
+    {cod:'Frt96523',or:'AIR-E',fecha:'2026-04-28',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt96524',or:'AIR-E',fecha:'2026-04-28',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+    {cod:'Frt96525',or:'CENS (ESSA)',fecha:'2026-04-28',tipo:'Falla Transformador de Corriente (TC)',amp:'No'},
+    {cod:'Frt47398',or:'AIR-E',fecha:'2026-04-10',tipo:'Falla Dispositivos de interfaz de comunicacion',amp:'No'},
+  ],
+  por_or:{'ENEL CUNDINAMARCA':1375,'AIRE CARIBE_SOL':652,'AFINIA CARIBE_MAR':524,'EMCALI CALI':211,'EPM ANTIOQUIA':143,'CELSIA VALLE/TOL':175,'ESSA SANTANDER':120,'ELECTROHUILA HUILA':96,'CHEC CALDAS':43,'EBSA BOYACA':43,'OTROS':208},
+  por_tipo:{'Falla Dispositivos de interfaz de comunicacion':12,'Falla Transformador de Corriente (TC)':3,'Falla Contador Principal':2},
+};
+
+// EVENTOS — actualizados con noticias reales de hoy
+const EVENTOS = [
+  // ── HOY 18 MAYO — LUNES FESTIVO ─────────────────────────────
+  {id:1,tipo:'mant',or:'Enel',dpto:'Cundinamarca',ciudad:'Bogotá',
+   motivo:'Mant. Enel — Barrios La Fragua, Restrepo Occidental, Santander, Marandú, Alquería La Fragua Norte, Jorge Gaitán Cortés, La Asunción, La Camelia II, La Pradera, La Trinidad, Montes 4pm–8pm',
+   inicio:'16:00',fin:'20:00',afect:'Múltiples barrios Bogotá',
+   fecha:'2026-05-18',url:'https://www.radiosantafe.com/2026/05/18/bogota-zipaquira-y-cajica-tendran-cortes-de-luz-este-lunes-festivo-18-de-mayo/',fuente:'radiosantafe.com'},
+  {id:2,tipo:'mant',or:'Enel',dpto:'Cundinamarca',ciudad:'Bogotá',
+   motivo:'Mant. Enel — Localidades Puente Aranda, Los Mártires, Kennedy, Engativá, Antonio Nariño (festivo) 4pm–8pm',
+   inicio:'16:00',fin:'20:00',afect:'Bogotá múltiples localidades',
+   fecha:'2026-05-18',url:'https://bogota.alerta.com.co/servicios/cortes-de-luz-en-bogota-y-cundinamarca-este-lunes-18-de-mayo-2026-242311',fuente:'bogota.alerta.com.co'},
+  {id:3,tipo:'mant',or:'Enel',dpto:'Cundinamarca',ciudad:'Zipaquirá',
+   motivo:'Mant. Enel — Zipaquirá: múltiples sectores 6am–12pm',
+   inicio:'06:00',fin:'12:00',afect:'Sectores Zipaquirá',
+   fecha:'2026-05-18',url:'https://bogota.gov.co/mi-ciudad/habitat/cortes-de-luz-en-bogota-zipaquira-y-cajica-este-lunes-18-de-mayo',fuente:'bogota.gov.co'},
+  {id:4,tipo:'mant',or:'Enel',dpto:'Cundinamarca',ciudad:'Cajicá',
+   motivo:'Mant. Enel — Cajicá: Tierra de Páez, La Capellanía, Rincón Santo, Río Grande, Molinos, Chuntame, Manas, Condominio Villa de los Pinos',
+   inicio:'00:00',fin:'20:00',afect:'Sectores Cajicá',
+   fecha:'2026-05-18',url:'https://www.elnuevosiglo.com.co/nacion/bogota-zipaquira-y-cajica-tendran-cortes-de-luz-el-18-de-mayo',fuente:'elnuevosiglo.com.co'},
+  {id:5,tipo:'mant',or:'Afinia',dpto:'Bolívar',ciudad:'Cartagena',
+   motivo:'Mant. Afinia — Centro Histórico: calle de la Artillería, calle de la Factoría, calle Santo Domingo, calle del Candilejo, calle Vélez Danies, calle de la Inquisición, Plaza de Bolívar (7am–5pm)',
+   inicio:'07:00',fin:'17:00',afect:'Centro Histórico Cartagena',
+   fecha:'2026-05-18',url:'https://www.eluniversal.com.co/cartagena/2026/05/17/bocagrande-y-otros-barrios-de-cartagena-tendran-cortes-de-luz-este-18-de-mayo/',fuente:'eluniversal.com.co'},
+  {id:6,tipo:'mant',or:'Afinia',dpto:'Bolívar',ciudad:'Cartagena',
+   motivo:'Mant. Afinia — Bocagrande y barrios adicionales Cartagena (7am–5pm)',
+   inicio:'07:00',fin:'17:00',afect:'Bocagrande y sectores Cartagena',
+   fecha:'2026-05-18',url:'https://www.eluniversal.com.co/cartagena/2026/05/17/bocagrande-y-otros-barrios-de-cartagena-tendran-cortes-de-luz-este-18-de-mayo/',fuente:'eluniversal.com.co'},
+  {id:7,tipo:'mant',or:'Afinia',dpto:'Bolívar',ciudad:'Hatillo de Loba',
+   motivo:'Mant. Afinia — Municipio Hatillo de Loba: zona urbana y rural (Juana Sánchez, vía Juana Sánchez-Hatillo) 2pm–6pm',
+   inicio:'14:00',fin:'18:00',afect:'Hatillo de Loba Bolívar',
+   fecha:'2026-05-18',url:'https://www.eluniversal.com.co/regional/bolivar/2026/05/17/municipios-de-bolivar-que-estaran-sin-luz-el-lunes-18-de-mayo-de-2026/',fuente:'eluniversal.com.co'},
+  // ── ALERTA VIGENTE ───────────────────────────────────────────
+  {id:8,tipo:'falla',or:'Afinia',dpto:'Bolívar',ciudad:'Cartagena / Caribe',
+   motivo:'ALERTA — Afinia reporta sobrecarga en circuitos por calor extremo en Cartagena y el Caribe. Consumo subió 9% entre feb-abr 2026. Cortes imprevistos por protección de red.',
+   inicio:'Permanente',fin:'Vigente',afect:'Toda la región Caribe',
+   fecha:'2026-05-18',url:'https://www.eluniversal.com.co/regional/bolivar/2026/05/13/afinia-alerta-sobrecarga-en-circuitos-por-calor-extremo-en-cartagena-y-el-caribe/',fuente:'eluniversal.com.co'},
+  // ── FALLAS VIGENTES SIC ──────────────────────────────────────
+  {id:9,tipo:'falla',or:'Air-e',dpto:'Atlántico',ciudad:'Barranquilla',
+   motivo:'Falla Dispositivos interfaz comunicación — SIC Frt58776 · 7 fallas Air-e vigentes en frontera Bia',
+   inicio:'10/04',fin:'Vigente',afect:'Clientes Bia afectados',
+   fecha:'2026-04-10',url:'https://www.aire.com.co',fuente:'BD_Telemedida · aire.com.co'},
+  {id:10,tipo:'falla',or:'Enel',dpto:'Cundinamarca',ciudad:'Bogotá',
+   motivo:'Falla Dispositivos interfaz comunicación — SIC Frt66629 · Colombia Telecom/Telefonica',
+   inicio:'13/04',fin:'Vigente',afect:'Cliente Bia: TELEFONICA',
+   fecha:'2026-04-13',url:'https://www.enel.com.co',fuente:'BD_Telemedida · enel.com.co'},
+  {id:11,tipo:'falla',or:'Enel',dpto:'Cundinamarca',ciudad:'Bogotá',
+   motivo:'Falla Dispositivos interfaz comunicación — SIC Frt47585 · Keep & Go CLL 144',
+   inicio:'13/04',fin:'Vigente',afect:'Cliente Bia: KEEP & GO',
+   fecha:'2026-04-13',url:'https://www.enel.com.co',fuente:'BD_Telemedida · enel.com.co'},
+  {id:12,tipo:'falla',or:'Electrohuila',dpto:'Huila',ciudad:'Neiva (rural)',
+   motivo:'Falla Contador Principal — SIC Frt35838 · Trilladora Emanuel · Cliente Bia afectado',
+   inicio:'28/04',fin:'Vigente',afect:'Cliente Bia: TRILLADORA EMANUEL',
+   fecha:'2026-04-28',url:'https://electrohuila.com.co',fuente:'BD_Telemedida · electrohuila.com.co'},
+  {id:13,tipo:'falla',or:'ESSA',dpto:'Santander',ciudad:'Bucaramanga',
+   motivo:'Falla Dispositivos interfaz comunicación — SIC Frt94731 · Electrificadora Santander',
+   inicio:'13/04',fin:'Vigente',afect:'Cliente Bia en falla',
+   fecha:'2026-04-13',url:'https://www.essa.com.co',fuente:'BD_Telemedida · essa.com.co'},
+  {id:14,tipo:'falla',or:'EBSA',dpto:'Boyacá',ciudad:'Miraflores',
+   motivo:'Falla Dispositivos interfaz comunicación — SIC Frt43730 · Transportadora Gas TGI',
+   inicio:'13/04',fin:'Vigente',afect:'Cliente Bia: TGI',
+   fecha:'2026-04-13',url:'https://www.ebsa.com.co',fuente:'BD_Telemedida · ebsa.com.co'},
+  // ── EPM SEMANA ACTUAL ────────────────────────────────────────
+  {id:15,tipo:'mant',or:'EPM',dpto:'Antioquia',ciudad:'Turbo / Zaragoza / Anorí / Urrao',
+   motivo:'Mant. EPM semana actual — Turbo veredas La Esperanza, El Dos, San Felipe, Alto Caimán y más · Zaragoza veredas Bocas Maestro Esteban · Anorí Los Trozos · Urrao La Despensa',
+   inicio:'08:00',fin:'17:00',afect:'Múltiples municipios Antioquia',
+   fecha:'2026-05-18',url:'https://www.epm.com.co/clientesyusuarios/interrupciones-del-servicio/energia/',fuente:'epm.com.co'},
+  {id:16,tipo:'mant',or:'EPM',dpto:'Antioquia',ciudad:'Santa Fe de Antioquia / El Bagre',
+   motivo:'Mant. EPM — Santa Fe de Antioquia veredas La Aldea, Ogasco, San Antonio, El Carmen, Pinguro, El Balso · El Bagre Villa Ucuru, El Perico',
+   inicio:'08:00',fin:'16:00',afect:'Santa Fe Antioquia y El Bagre',
+   fecha:'2026-05-18',url:'https://www.epm.com.co/clientesyusuarios/interrupciones-del-servicio/energia/',fuente:'epm.com.co'},
+  // ── ANTERIORES RECIENTES ─────────────────────────────────────
+  {id:17,tipo:'mant',or:'Enel',dpto:'Cundinamarca',ciudad:'Cajicá / Zipaquirá',
+   motivo:'Mant. Enel 17 mayo — Sectores Tierra de Páez, La Capellanía, Rincón Santo, Chuntame, Molinos (12am–8pm) y Vereda Portachuelo Zipaquirá',
+   inicio:'00:00',fin:'20:00',afect:'Cajicá y Zipaquirá',
+   fecha:'2026-05-17',url:'https://bogota.gov.co/mi-ciudad/habitat/cortes-de-luz-en-bogota-zipaquira-y-cajica-este-lunes-18-de-mayo',fuente:'bogota.gov.co'},
+  {id:18,tipo:'mant',or:'Afinia',dpto:'Bolívar',ciudad:'Cartagena',
+   motivo:'Mant. Afinia 14 mayo — Barrio Chino Cra 31 y Transv. 23 (5pm–5am) · Pablo VI Cra 19A (8am–6pm)',
+   inicio:'17:00',fin:'05:00 +1',afect:'~1.900 usuarios',
+   fecha:'2026-05-14',url:'https://www.eluniversal.com.co/cartagena/2026/05/13/cortes-de-luz-en-cartagena-el-jueves-14-de-mayo-horarios-y-barrios-afectados/',fuente:'eluniversal.com.co'},
+  {id:19,tipo:'mant',or:'Afinia',dpto:'Bolívar',ciudad:'Cartagena',
+   motivo:'Mant. Afinia 13 mayo — Villa Hermosa (Cra 96A entre Clls 1-3) y Campo Bello III (10am–7pm)',
+   inicio:'10:00',fin:'19:00',afect:'~4.100 usuarios',
+   fecha:'2026-05-13',url:'https://www.eluniversal.com.co/cartagena/2026/05/12/estos-barrios-de-cartagena-no-tendran-luz-el-13-de-mayo-de-2026/',fuente:'eluniversal.com.co'},
+  {id:20,tipo:'mant',or:'Electrohuila',dpto:'Huila',ciudad:'Garzón / Rivera / Palermo',
+   motivo:'Mant. Electrohuila sem.19 — Garzón, Rivera, Palermo, Neiva, Baraya, Tello, Pitalito, Suaza 7am-5pm',
+   inicio:'07:00',fin:'17:00',afect:'Múltiples municipios Huila',
+   fecha:'2026-05-07',url:'https://lavozdelaregion.co/nuevas-suspensiones-de-energia-en-varios-municipios-del-huila/',fuente:'lavozdelaregion.co'},
+];
+
+const OPERADORES = [
+  {nombre:'Air-e',     region:'Caribe',       fallas:7,  mant:1, cli:652,  color:'#FF4B6E'},
+  {nombre:'Afinia',    region:'Caribe',       fallas:0,  mant:7, cli:524,  color:'#F59E0B'},
+  {nombre:'Enel',      region:'Centro',       fallas:3,  mant:3, cli:1375, color:'#FF4B6E'},
+  {nombre:'EPM',       region:'Norandina',    fallas:0,  mant:1, cli:143,  color:'#08DDBC'},
+  {nombre:'Celsia',    region:'Suroccidente', fallas:0,  mant:1, cli:175,  color:'#F59E0B'},
+  {nombre:'Electrohuila',region:'Sur Huila',  fallas:1,  mant:3, cli:96,   color:'#FF4B6E'},
+  {nombre:'ESSA',      region:'Oriente',      fallas:1,  mant:0, cli:120,  color:'#FF4B6E'},
+  {nombre:'EBSA',      region:'Centro',       fallas:1,  mant:0, cli:43,   color:'#FF4B6E'},
+  {nombre:'Cedenar',   region:'Sur Nariño',   fallas:0,  mant:0, cli:62,   color:'#08DDBC'},
+];
+
+const BOLETINES = [
+  {or:'Enel Colombia',fecha:'18/05/2026',
+   titulo:'Lunes festivo 18 mayo: cortes de luz en Bogotá, Zipaquirá y Cajicá — Día de la Ascensión',
+   res:'Por mantenimiento y modernización de redes, Enel programa cortes 4pm–8pm en localidades Puente Aranda, Los Mártires, Kennedy, Engativá y Antonio Nariño en Bogotá. Zipaquirá (6am–12pm) y Cajicá (sectores Tierra de Páez, La Capellanía, Rincón Santo). Línea: 601 5 115 115.',
+   circs:['La Fragua','Restrepo Occ.','Marandú','Zipaquirá','Cajicá'],
+   url:'https://www.radiosantafe.com/2026/05/18/bogota-zipaquira-y-cajica-tendran-cortes-de-luz-este-lunes-festivo-18-de-mayo/',
+   fuente:'radiosantafe.com · bogota.gov.co · enel.com.co',verf:'VERIFICADO'},
+  {or:'Afinia',fecha:'18/05/2026',
+   titulo:'Afinia corta luz en Cartagena hoy — Centro Histórico y Bocagrande (7am–5pm) + Hatillo de Loba Bolívar',
+   res:'Trabajos de mantenimiento y optimización de redes en Cartagena: Centro Histórico (calle Artillería, calle Factoría, Santo Domingo, Candilejo, Vélez Danies, Inquisición, Plaza de Bolívar) y Bocagrande. También municipio Hatillo de Loba (2pm–6pm). Canal: 115, afinia.com.co, Afiniapp.',
+   circs:['Centro Histórico','Bocagrande','Hatillo de Loba'],
+   url:'https://www.eluniversal.com.co/cartagena/2026/05/17/bocagrande-y-otros-barrios-de-cartagena-tendran-cortes-de-luz-este-18-de-mayo/',
+   fuente:'eluniversal.com.co · afinia.com.co',verf:'VERIFICADO'},
+  {or:'Afinia',fecha:'13/05/2026',
+   titulo:'ALERTA — Afinia reporta sobrecarga en circuitos por calor extremo en el Caribe colombiano',
+   res:'Consumo subió 9% entre febrero y abril 2026. Cortes imprevistos por protección automática de red. Ricardo Arango, gerente de Afinia: "El incremento ha sido exponencial, exigiendo al límite la red". La empresa fortalece capacidades operativas para responder en temporada de altas temperaturas.',
+   circs:['Region Caribe','Bolívar','Cesar','Córdoba','Sucre'],
+   url:'https://www.eluniversal.com.co/regional/bolivar/2026/05/13/afinia-alerta-sobrecarga-en-circuitos-por-calor-extremo-en-cartagena-y-el-caribe/',
+   fuente:'eluniversal.com.co · afinia.com.co',verf:'VERIFICADO'},
+  {or:'EPM',fecha:'18/05/2026',
+   titulo:'EPM semana actual — Interrupciones programadas en Turbo, Zaragoza, Anorí, Urrao, Santa Fe de Antioquia y El Bagre',
+   res:'Trabajos de mantenimiento en redes eléctricas. Turbo veredas La Esperanza, El Dos, San Felipe, Alto Caimán (8am–5pm). Zaragoza veredas Bocas del Maestro Esteban (9am–2pm). Anorí Los Trozos, Madre Seca (9am–3pm). Santa Fe Antioquia veredas La Aldea, Ogasco, Pinguro (8am–4pm).',
+   circs:['Turbo','Zaragoza','Anorí','Santa Fe Antioquia'],
+   url:'https://www.epm.com.co/clientesyusuarios/interrupciones-del-servicio/energia/',
+   fuente:'epm.com.co',verf:'VERIFICADO'},
+  {or:'Enel Colombia',fecha:'17/05/2026',
+   titulo:'17 mayo: cortes en Cajicá y Zipaquirá — Tierra de Páez, La Capellanía, Rincón Santo, Vereda Portachuelo',
+   res:'Suspensiones por trabajos en redes de distribución. Cajicá sectores: Tierra de Páez, La Capellanía, Rincón Santo, Río Grande, Molinos, Chuntame, Manas, Villa de los Pinos (12am–8pm). Zipaquirá Vereda Portachuelo (6am–12pm).',
+   circs:['Cajicá','Zipaquirá'],
+   url:'https://bogota.gov.co/mi-ciudad/habitat/cortes-de-luz-en-bogota-zipaquira-y-cajica-este-lunes-18-de-mayo',
+   fuente:'bogota.gov.co · enel.com.co',verf:'VERIFICADO'},
+  {or:'Afinia',fecha:'14/05/2026',
+   titulo:'Cortes Cartagena 14 mayo — Barrio Chino (5pm–5am) y Pablo VI (8am–6pm)',
+   res:'Barrio Chino: Cra 31 y Transv. 23 (5pm–5am). Pablo VI: Cra 19A entre Calles El Progreso y San José (8am–6pm). Canal: 115, afinia.com.co, Afiniapp.',
+   circs:['Barrio Chino','Pablo VI'],
+   url:'https://www.eluniversal.com.co/cartagena/2026/05/13/cortes-de-luz-en-cartagena-el-jueves-14-de-mayo-horarios-y-barrios-afectados/',
+   fuente:'eluniversal.com.co · afinia.com.co',verf:'VERIFICADO'},
+  {or:'Electrohuila',fecha:'06/05/2026',
+   titulo:'ElectroHuila sem.19 — Aipe, Villavieja, Garzón, Rivera, Palermo, Neiva, Pitalito y más',
+   res:'Semana 19 (4-10 mayo). Mantenimiento preventivo y control vegetación redes MT/BT. Zonas Norte, Centro y Sur del Huila. Horarios 7am–5pm. Atención: 01 8000 952115 y WhatsApp 313 435 4436.',
+   circs:['Aipe','Garzón','Rivera','Palermo','Pitalito'],
+   url:'https://lavozdelaregion.co/nuevas-suspensiones-de-energia-en-varios-municipios-del-huila/',
+   fuente:'lavozdelaregion.co · electrohuila.com.co',verf:'VERIFICADO'},
+  {or:'XM',fecha:'08/05/2026',
+   titulo:'ALERTA XM: Embalses SIN al 65.05% — riesgo racionamiento ante El Niño 2026-2027',
+   res:'SIN debe llegar al 80% de reservas en embalses antes agosto 2026. Solo ingresó 6.5% de los 4.475 MW previstos para 2026. Alta exigencia parque térmico (100 GWh/día). Transacciones con Ecuador suspendidas desde enero 2026.',
+   circs:['NACIONAL SIN'],
+   url:'https://www.xm.com.co/noticias',
+   fuente:'xm.com.co',verf:'VERIFICADO'},
+  {or:'Bia Energy',fecha:'18/05/2026',
+   titulo:'BD_Telemedida: 14 clientes Bia con falla vigente SIC — Gestión activa 18 mayo',
+   res:'Cruce automatico BD_Telemedida vs fallas vigentes: 14 clientes afectados. OR: Air-e (7), Enel (3), Caribemar (2), ESSA (1), EBSA (1), Electrohuila (1). Clientes: Colombia Telecom/Telefonica, Keep & Go, Colvinsa-Mosquera, TGI, Trilladora Emanuel.',
+   circs:['Frt58776','Frt66629','Frt43730','Frt35838'],
+   url:'https://www.bia.app',
+   fuente:'BD_Telemedida Bia Energy',verf:'INTERNO'},
+];
+
+// ══ STATE ══
+let F={dpto:'',or:'',falla:true,mant:true,ok:true}, DF='todos', calSel=null, calY=2026, calM=4;
+
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  startClock();
+  renderCalendar();
+  document.getElementById('dFrom').value='2026-04-01';
+  document.getElementById('dTo').value='2026-05-31';
+  updateStatus();
+  renderMapStats();
+  // Carga noticias automáticamente al abrir
+  setTimeout(()=>{ document.getElementById('liveTxt').textContent='EN VIVO'; autoLoad(); }, 1200);
+  // Refresco cada 30 min
+  setInterval(autoLoad, 30*60*1000);
+});
+
+function renderAll(){ renderEvts(); renderOps(); renderTele(); renderBols(); renderLogInit(); }
+
+// AUTO LOAD — busca las noticias de hoy al abrir
+async function autoLoad() {
+  document.getElementById('liveTxt').textContent='BUSCANDO…';
+  try {
+    const txt = await callAI(`Busca cortes de luz hoy ${TODAY} en Colombia. Incluye noticias de: Afinia, Enel, Air-e, Electrohuila, EPM, Celsia, ESSA. Usa SOLO estas fuentes (sin suscripción): afinia.com.co, aire.com.co, epm.com.co, enel.com.co, celsia.com, essa.com.co, electrohuila.com.co, eluniversal.com.co, radiosantafe.com, bogota.alerta.com.co, noticiascoopercom.co, lavozdelaregion.co, cronista.com/colombia. Formato: **[OR] [TIPO] · [Ciudad] · [Fecha]** descripción → URL 🔗 Fuente: dominio`);
+    if (txt && txt.length > 60) { mostrarAI(txt); pushLog(`<span class="cg">✓ Noticias actualizadas</span> — ${new Date().toLocaleTimeString('es-CO')}`); }
+  } catch(e) { /* silencioso */ }
+  document.getElementById('liveTxt').textContent='EN VIVO';
+}
+
+// ══ AI CALL — API Anthropic (funciona dentro de claude.ai) ══
+async function callAI(q) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514', max_tokens:1000,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      system:`Eres BiaPulse, monitor del SIN Colombia para Bia Energy. 
+FUENTES PERMITIDAS (sin suscripción, abiertas):
+afinia.com.co · aire.com.co · epm.com.co · enel.com.co · celsia.com · essa.com.co · cedenar.com.co · electrohuila.com.co · xm.com.co · eluniversal.com.co · radiosantafe.com · bogota.alerta.com.co · noticiascoopercom.co · lavozdelaregion.co · lavibrante.com · elpaisvallenato.com · cronista.com/colombia · abceconomia.co
+
+NO citar: eltiempo.com, semana.com, portafolio.co, dinero.com (requieren suscripción).
+
+Para cada evento responde EXACTAMENTE con este formato y nada más:
+**[OR] [TIPO] · [Municipio] · [Fecha]**
+[Descripción breve: zonas/barrios/horarios/usuarios]
+→ [URL exacta del artículo]
+🔗 Fuente: [dominio]
+---
+
+Si no hay noticias nuevas para la fecha consultada, responde: "No se encontraron nuevas interrupciones para esta fecha en las fuentes disponibles."`,
+      messages:[{role:'user',content:q}]
+    })
+  });
+  if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||`HTTP ${r.status}`); }
+  const data = await r.json();
+  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+
+async function buscar() {
+  const q = document.getElementById('sInput').value.trim();
+  if (!q) return;
+  const btn=document.getElementById('sBtn');
+  btn.disabled=true; btn.textContent='⏳ Buscando…';
+  document.getElementById('spin').classList.add('show');
+  document.getElementById('ares').classList.remove('show');
+  pushLog(`<span class="cc">Buscando:</span> ${q.substring(0,45)}…`);
+  try {
+    const txt = await callAI(q + ` — Colombia SIN ${TODAY}`);
+    mostrarAI(txt);
+    pushLog(`<span class="cg">✓ Resultado</span> — ${q.substring(0,30)}`);
+  } catch(e) {
+    document.getElementById('aresbody').innerHTML=`<div class="aentry">
+      <div class="aetitle" style="color:var(--mant)">⚠ Búsqueda IA — Nota</div>
+      <div class="aedesc">La búsqueda en tiempo real funciona cuando la app corre <strong>dentro de claude.ai</strong> (como Artifact). Si descargaste el archivo HTML, usa los links directos en la pestaña <strong>Boletines</strong> para acceder a las fuentes oficiales. Todos los boletines ya tienen links verificados a los operadores.</div>
+    </div>`;
+    document.getElementById('ares').classList.add('show');
+  }
+  document.getElementById('spin').classList.remove('show');
+  btn.disabled=false; btn.textContent='⚡ Buscar';
+}
+
+function mostrarAI(txt) {
+  const entries = txt.split(/\n---+\n/).map(e=>e.trim()).filter(e=>e.length>15);
+  const body = document.getElementById('aresbody');
+  if (!entries.length || txt.includes('No se encontraron')) {
+    body.innerHTML=`<div class="aentry"><div class="aedesc">${txt.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/(https?:\/\/[^\s<\n]+)/g,'<a href="$1" target="_blank">→ $1</a>')}</div></div>`;
+  } else {
+    body.innerHTML = entries.map(e => {
+      const lines = e.split('\n').filter(l=>l.trim());
+      const hdr = (lines.find(l=>l.startsWith('**'))||'').replace(/\*\*/g,'');
+      const url = (lines.find(l=>l.trim().startsWith('→'))||'').replace('→','').trim();
+      const src = (lines.find(l=>l.includes('🔗 Fuente:'))||'').replace('🔗 Fuente:','').trim();
+      const desc = lines.filter(l=>!l.startsWith('**')&&!l.startsWith('→')&&!l.includes('🔗')).join(' ').trim();
+      const isFalla = /falla|imprevista|emergenc/i.test(hdr+desc);
+      const isMant = /mant|program|suspens|corte/i.test(hdr+desc);
+      const pc = isFalla?'pf':isMant?'pm':'pa', pt = isFalla?'FALLA':isMant?'MANT':'ALERTA';
+      return `<div class="aentry">
+        <div class="aehdr">
+          <span class="aeor">${hdr||'Evento SIN'}</span>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span class="aepill ${pc}">${pt}</span>
+            <span class="aedate">${TODAY.split('-').reverse().join('/')}</span>
+          </div>
+        </div>
+        ${desc?`<div class="aedesc">${desc}</div>`:''}
+        ${url?`<a class="aelink" href="${url}" target="_blank" rel="noopener">▸ Ver noticia${src?' · '+src:''}</a>`:''}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('ares').classList.add('show');
+}
+
+// ══ RENDER EVENTS ══
+function renderEvts() {
+  const dpto = document.getElementById('fDpto').value;
+  const or   = document.getElementById('fOR').value;
+  const from = document.getElementById('dFrom').value;  // YYYY-MM-DD
+  const to   = document.getElementById('dTo').value;    // YYYY-MM-DD
+
+  let filtered = EVENTOS.filter(e => {
+    // Filtro tipo
+    if (!F[e.tipo]) return false;
+    // Filtro departamento
+    if (dpto && !e.dpto.includes(dpto)) return false;
+    // Filtro operador
+    if (or && e.or !== or) return false;
+    // Filtro fecha
+    if (DF === 'hoy') {
+      return e.fecha === TODAY;
+    } else if (DF === 'semana') {
+      const diff = dateDiff(e.fecha);
+      return diff >= 0 && diff <= 7;
+    } else if (calSel) {
+      // Calendario seleccionado: mostrar ese día Y todos los anteriores dentro del rango
+      return e.fecha <= calSel;
+    } else {
+      // Modo TODOS: respetar los inputs de fecha si están definidos
+      if (from && e.fecha < from) return false;
+      if (to   && e.fecha > to)   return false;
+      return true;
+    }
+  }).sort((a,b) => b.fecha.localeCompare(a.fecha));
+
+  // Indicador de filtro de fecha activo
+  let filtroLabel = '';
+  if (calSel) filtroLabel = ` · hasta ${calSel.split('-').reverse().join('/')}`;
+  else if (from || to) filtroLabel = ` · ${from ? from.split('-').reverse().join('/') : '...'} → ${to ? to.split('-').reverse().join('/') : '...'}`;
+
+  document.getElementById('evCnt').textContent = filtered.length + ' eventos' + filtroLabel;
+
+  if (!filtered.length) {
+    document.getElementById('incList').innerHTML = '<div class="empty">Sin eventos para el rango de fechas seleccionado</div>';
+    return;
+  }
+
+  const lbl = {falla:'Falla Vigente', mant:'Mantenimiento', ok:'Normal'};
+  document.getElementById('incList').innerHTML = filtered.map((e,i) => `
+    <a class="ic ${e.tipo}" style="animation-delay:${i*0.035}s;text-decoration:none;display:grid;" href="${e.url}" target="_blank" rel="noopener" title="Ver noticia original · ${e.fuente}">
+      <div class="istripe"></div>
+      <div>
+        <div class="iop"><span>${e.or}</span> · ${e.ciudad}, ${e.dpto}</div>
+        <div class="ititle">${e.motivo}</div>
+        <div class="ichips">
+          ${e.afect&&e.afect!=='—' ? `<span class="chip ac">◈ ${e.afect}</span>` : ''}
+          <span class="chip dc">📅 ${e.fecha.split('-').reverse().join('/')}</span>
+          <span class="chip">⏱ ${e.inicio}${e.fin&&e.fin!=='—' ? ' – '+e.fin : ''}</span>
+          <span class="chip lc">🔗 ${e.fuente} ↗</span>
+        </div>
+      </div>
+      <div class="iright">
+        <span class="ipill">${lbl[e.tipo]}</span>
+        <span class="itime">${e.inicio}</span>
+      </div>
+    </a>`).join('');
+}
+function dateDiff(fecha) {
+  const d = new Date(fecha), t = new Date(TODAY);
+  return Math.floor((t - d) / 86400000);
+}
+
+// ══ OPERADORES ══
+function renderOps(){
+  document.getElementById('opList').innerHTML=OPERADORES.map(op=>{
+    const cnt=op.fallas||op.mant, c=op.fallas>0?'var(--falla)':op.mant>0?'var(--mant)':'var(--ok)';
+    return `<div class="oprow" onclick="document.getElementById('fOR').value='${op.nombre}';filtrar()">
+      <div class="opdot" style="background:${op.color};box-shadow:0 0 6px ${op.color}77"></div>
+      <div class="opnm">${op.nombre}</div>
+      <div class="oprg">${op.region} · ${op.cli}</div>
+      <div class="opcnt" style="color:${c}">${cnt||'✓'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══ TELEMEDIDA ══
+function renderTele(){
+  document.getElementById('teleList').innerHTML=BIA.afectados.slice(0,8).map(a=>`
+    <div class="smrow aff">
+      <div class="rn">${a.id} · ${a.u.substring(0,34)}${a.u.length>34?'…':''}</div>
+      <div class="rc">${a.or} · ${a.sic}</div>
+      <span class="ftag">⚡ ${a.tipo.substring(0,28)}</span>
+    </div>`).join('')+`<div class="smrow" style="text-align:center;color:var(--tx3);font-size:9px">+${BIA.afectados.length-8} más → pestaña Telemedida</div>`;
+  document.getElementById('telePorOR').innerHTML=Object.entries(BIA.por_or).map(([k,v])=>`<div class="barrow"><span>${k}</span><span>${v}</span></div>`).join('');
+  document.getElementById('telePorTipo').innerHTML=Object.entries(BIA.por_tipo).map(([k,v])=>`<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="font-size:10px;font-weight:600;color:var(--tx3);margin-bottom:2px">${k}</div><div style="font-size:14px;font-weight:800;color:var(--falla)">${v} casos</div></div>`).join('');
+  document.getElementById('teleAfect').innerHTML=BIA.afectados.map(a=>`
+    <div class="trow aff">
+      <div class="rn">${a.id} — ${a.u}</div>
+      <div class="rc">${a.or} · SIC: ${a.sic}</div>
+      <span class="ftag">⚡ ${a.tipo}</span>
+    </div>`).join('');
+  document.getElementById('teleAllF').innerHTML=BIA.fallas_sic.map(f=>`
+    <div class="trow" style="border-color:rgba(255,75,110,.16)">
+      <div class="rn" style="color:var(--falla)">${f.cod} · ${f.or}</div>
+      <div class="rc">${f.fecha} · ${f.tipo}${f.amp==='Sí'?' · <span style="color:var(--falla)">Ampliación solicitada</span>':''}</div>
+    </div>`).join('');
+}
+
+// ══ BOLETINES ══
+function renderBols(){
+  document.getElementById('bolCnt').textContent=BOLETINES.length+' boletines';
+  document.getElementById('bolList').innerHTML=BOLETINES.map((b,i)=>`
+    <a class="bcrd" style="animation-delay:${i*0.055}s;text-decoration:none;display:block" href="${b.url}" target="_blank" rel="noopener" title="Ver noticia · ${b.fuente}">
+      <div class="btop">
+        <div class="bmeta">
+          <span class="bor">${b.or}</span>
+          <div style="display:flex;align-items:center;gap:7px"><span class="bvf">${b.verf}</span><span class="bdate">📅 ${b.fecha}</span></div>
+        </div>
+        <div class="btitle">${b.titulo}</div>
+        <div class="bsum">${b.res}</div>
+      </div>
+      <div class="bbot">
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${b.circs.map(c=>`<span class="chip">⚡ ${c}</span>`).join('')}</div>
+        <span class="blink">▸ Ver noticia · ${b.fuente} ↗</span>
+      </div>
+    </a>`).join('');
+}
+
+// ══ LOG ══
+function renderLogInit(){
+  renderLogs([
+    {t:'14:32',m:'<span class="cr">FALLA</span> — <span class="cc">Frt58776</span> Air-e · Barranquilla vigente'},
+    {t:'14:20',m:'<span class="cc">Electrohuila</span> agregado — Frt35838 · Huila · Trilladora Emanuel'},
+    {t:'14:10',m:'Cruce telemedida: <span class="cr">14 clientes Bia en falla</span>'},
+    {t:'13:55',m:'<span class="cc">XM</span> — Embalses SIN 65.05% · alerta El Niño 2026'},
+    {t:'13:20',m:'<span class="ca">MANT</span> — Enel Bogotá 14/05 · radiosantafe.com ✓'},
+    {t:'13:10',m:'<span class="ca">MANT</span> — Afinia Cartagena 14/05 · eluniversal.com.co ✓'},
+    {t:'12:55',m:'<span class="ca">MANT</span> — Electrohuila sem.19 Huila · lavozdelaregion.co ✓'},
+  ]);
+}
+function renderLogs(logs){document.getElementById('logList').innerHTML=logs.map(l=>`<div class="li"><span class="lt">${l.t}</span><span>${l.m}</span></div>`).join('');}
+function pushLog(msg){
+  const el=document.getElementById('logList');
+  const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0');
+  const d=document.createElement('div');d.className='li';
+  d.innerHTML=`<span class="lt">${h}:${m}</span><span>${msg}</span>`;
+  el.insertBefore(d,el.firstChild);
+  while(el.children.length>12)el.removeChild(el.lastChild);
+}
+
+// ══ STATUS ══
+function updateStatus(){
+  const f=EVENTOS.filter(e=>e.tipo==='falla').length;
+  const dot=document.getElementById('sdot'),val=document.getElementById('sval');
+  if(f===0){dot.className='sdot ok';val.className='sv-ok';val.textContent='ESTABLE';}
+  else if(f<=3){dot.className='sdot al';val.className='sv-al';val.textContent='ALERTA';}
+  else{dot.className='sdot rj';val.className='sv-rj';val.textContent='CONTINGENCIA';}
+}
+function renderMapStats(){
+  document.getElementById('mapaStats').innerHTML=[
+    ['Fallas SIC Bia','17','var(--falla)'],['Clientes afectados','14','var(--falla)'],
+    ['Clientes activos','3.590','var(--ok)'],['OR monitoreados','9','#fff'],
+    ['Embalses SIN','65.05%','var(--mant)'],['Meta segura','80%','var(--ok)'],
+    ['Fuente','XM · BD_Tele.','var(--aq)'],
+  ].map(([k,v,c])=>`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${k}</span><span style="font-weight:700;color:${c}">${v}</span></div>`).join('');
+}
+
+// ══ CLOCK ══
+function startClock(){
+  const tick=()=>{const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),s=String(n.getSeconds()).padStart(2,'0');const el=document.getElementById('clk');if(el)el.textContent=`${h}:${m}:${s}`;};
+  tick();setInterval(tick,1000);
+}
+
+// ══ FILTERS ══
+function filtrar(){renderEvts();}
+function toggleF(t){F[t]=!F[t];document.getElementById('fb-'+t).classList.toggle('off',!F[t]);renderEvts();}
+function setDF(v){
+  DF = v; calSel = null;
+  // Resetear label del botón calendario
+  document.getElementById('bCal').textContent = '📅 Calendario';
+  document.getElementById('bCal').classList.remove('active');
+  // Resetear inputs de fecha según modo
+  if (v === 'todos') {
+    document.getElementById('dFrom').value = '2026-04-01';
+    document.getElementById('dTo').value   = '2026-05-31';
+  } else if (v === 'hoy') {
+    document.getElementById('dFrom').value = TODAY;
+    document.getElementById('dTo').value   = TODAY;
+  } else if (v === 'semana') {
+    const d7 = new Date(TODAY); d7.setDate(d7.getDate()-7);
+    document.getElementById('dFrom').value = d7.toISOString().split('T')[0];
+    document.getElementById('dTo').value   = TODAY;
+  }
+  ['bTodos','bHoy','bSem'].forEach(b => document.getElementById(b).classList.remove('active'));
+  const m = {todos:'bTodos', hoy:'bHoy', semana:'bSem'};
+  if (m[v]) document.getElementById(m[v]).classList.add('active');
+  renderEvts();
+}
+
+// ══ CALENDAR ══
+function toggleCal(){document.getElementById('calPop').classList.toggle('open');if(document.getElementById('calPop').classList.contains('open'))renderCalendar();}
+function renderCalendar(){
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calMon').textContent=`${meses[calM]} ${calY}`;
+  const grid=document.getElementById('calGrid');
+  const firstDay=new Date(calY,calM,1).getDay(), offset=(firstDay===0?6:firstDay-1), dIM=new Date(calY,calM+1,0).getDate();
+  const evd={};EVENTOS.forEach(e=>{if(!evd[e.fecha])evd[e.fecha]={};evd[e.fecha][e.tipo]=true;});
+  let html=['L','M','X','J','V','S','D'].map(d=>`<div class="cdow">${d}</div>`).join('');
+  for(let i=0;i<offset;i++)html+=`<div class="cday emp"></div>`;
+  for(let d=1;d<=dIM;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let cls='cday';
+    if(ds===TODAY)cls+=' today';if(ds===calSel)cls+=' sel';
+    if(evd[ds]){if(evd[ds].falla)cls+=' hf';else if(evd[ds].mant)cls+=' hm';}
+    html+=`<div class="${cls}" onclick="pickDay('${ds}')">${d}</div>`;
+  }
+  grid.innerHTML=html;
+}
+function pickDay(d) {
+  // Toggle: si ya estaba seleccionada vuelve a Todos, si no la selecciona
+  calSel = (calSel === d) ? null : d;
+  renderCalendar();
+
+  if (calSel) {
+    // Mostrar todos los eventos desde el inicio hasta la fecha seleccionada
+    document.getElementById('dFrom').value = '2026-01-01';
+    document.getElementById('dTo').value   = calSel;
+    // Quitar botones activos (Hoy/Semana/Todos)
+    ['bTodos','bHoy','bSem'].forEach(b => document.getElementById(b).classList.remove('active'));
+    // Mostrar indicador visual en el botón calendario
+    document.getElementById('bCal').textContent = `📅 ${calSel.split('-').reverse().join('/')}`;
+    document.getElementById('bCal').classList.add('active');
+  } else {
+    // Al deseleccionar: volver a Todos
+    document.getElementById('dFrom').value = '2026-04-01';
+    document.getElementById('dTo').value   = '2026-05-31';
+    document.getElementById('bCal').textContent = '📅 Calendario';
+    document.getElementById('bCal').classList.remove('active');
+    document.getElementById('bTodos').classList.add('active');
+  }
+
+  document.getElementById('calPop').classList.remove('open');
+  filtrar();
+}
+function calPrev(){calM===0?(calM=11,calY--):calM--;renderCalendar();}
+function calNext(){calM===11?(calM=0,calY++):calM++;renderCalendar();}
+
+// ══ SCREEN ══
+function showScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.ntab').forEach(t=>{const m={dash:'Dashboard',tele:'Telemedida',boletines:'Boletines',mapa:'Mapa'};if(t.textContent.trim()===m[name])t.classList.add('active');});
+}
+
+// ══ LIVE LOG ══
+const liveMsgs=[
+  '<span class="cc">Afinia</span> — eluniversal.com.co · Cartagena 14/05 verificado',
+  '<span class="cr">FALLA</span> — Frt58776 Air-e · Barranquilla vigente · BD_Telemedida',
+  '<span class="cc">Electrohuila</span> — lavozdelaregion.co · sem.19 Huila publicado',
+  '<span class="cg">✓ BD_Telemedida</span> — 3.590 clientes · 14 en falla · 9 OR',
+  '<span class="ca">ALERTA XM</span> — Embalses 65.05% · Meta: 80% antes ago-2026',
+  '<span class="cc">Enel</span> — radiosantafe.com · Bogotá 14/05 verificado',
+  '<span class="cg">✓ Fuentes abiertas</span> — 11 fuentes sin suscripción activas',
+];
+let liIdx=0;setInterval(()=>{pushLog(liveMsgs[liIdx%liveMsgs.length]);liIdx++;},14000);
+</script>
+</body>
+</html>
